@@ -1,15 +1,13 @@
 from hmac import compare_digest
-from models.user_repository import UserRepository
+from models.user import UserModel
 
 
 def authenticate(username, password):
-    user_repository = UserRepository()
-    user = user_repository.find_by_username(username)
+    user = UserModel.find_by_username(username)
     if user and compare_digest(user.password, password):
         return user
 
 
 def identity(payload):
-    user_repository = UserRepository()
     user_id = payload['identity']
-    return user_repository.find_by_id(user_id)
+    return UserModel.find_by_id(user_id)

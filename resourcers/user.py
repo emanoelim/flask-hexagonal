@@ -1,5 +1,5 @@
 from flask_restful import Resource, reqparse
-from user_repository import UserRepository
+from models.user_repository import UserRepository
 
 
 class UserRegister(Resource):

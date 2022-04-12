@@ -1,11 +1,6 @@
 import sqlite3
 
-
-class User():
-    def __init__(self, _id, username, password):
-        self.id = _id
-        self.username = username
-        self.password = password
+from models.user import UserModel
 
 
 class UserRepository:
@@ -18,7 +13,7 @@ class UserRepository:
         result = cursor.execute(query, (username,))
         row = result.fetchone()
         if row:
-            user = User(*row)
+            user = UserModel(*row)
         else:
             user = None
         connection.close()
@@ -31,7 +26,7 @@ class UserRepository:
         result = cursor.execute(query, (_id,))
         row = result.fetchone()
         if row:
-            user = User(*row)
+            user = UserModel(*row)
         else:
             user = None
         connection.close()

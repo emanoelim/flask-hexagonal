@@ -1,5 +1,5 @@
 from hmac import compare_digest
-from user import UserRepository
+from models.user_repository import UserRepository
 
 
 def authenticate(username, password):

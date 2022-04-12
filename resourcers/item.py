@@ -1,6 +1,7 @@
 from flask_restful import Resource, reqparse
 from flask_jwt import jwt_required
-from item_repository import ItemRepository
+from models.item_repository import ItemRepository
+from models.item import ItemModel
 
 
 class Item(Resource):
@@ -21,7 +22,7 @@ class Item(Resource):
     def get(self, name):
         item = self.item_repository.find_by_name(name)
         if item:
-            return item
+            return item.json()
         return {'message': 'Item not found'}, 404  
 
     @jwt_required()
@@ -38,18 +39,17 @@ class Item(Resource):
     def put(self, name):
         data = Item.parser.parse_args()
         item = self.item_repository.find_by_name(name)
-        updated_item = {'name': data['name'], 'price': data['price']}
         if item is None:
             try:
-                self.item_repository.insert(updated_item)
+                updeted_item = self.item_repository.insert(data['name'], data['price'])
             except:
                 return {"message": "An error occurred inserting the item."}, 500
         else:
             try:
-                self.item_repository.update(updated_item)
+                updeted_item = self.item_repository.update(item, data['name'], data['price'])
             except:
                 return {"message": "An error occurred updating the item."}, 500
-        return updated_item
+        return updeted_item.json()
 
 
 class ItemList(Resource):
@@ -69,16 +69,15 @@ class ItemList(Resource):
     @jwt_required()
     def get(self):
         items = self.item_repository.find_all()
-        return {'items': items}
+        return {'items': [item.json() for item in items]}
     
     @jwt_required()
     def post(self):
         data = Item.parser.parse_args()
         if self.item_repository.find_by_name(data['name']):
             return {'message': "An item with name '{}' already exists.".format(data['name'])}, 400
-        item = {'name': data['name'], 'price': data['price']}
         try:
-            self.item_repository.insert(item)
+            item = self.item_repository.insert(data['name'], data['price'])
         except:
             return {"message": "An error occurred inserting the item."}, 500
-        return item  
+        return item.json()  

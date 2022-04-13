@@ -21,33 +21,33 @@ class Item(Resource):
         item = ItemModel.find_by_name(name)
         if item:
             return item.json()
+            
         return {'message': 'Item not found'}, 404  
 
     @jwt_required()
     def delete(self, name):
         item = ItemModel.find_by_name(name)
         if item: 
-            try:
-                item.delete()
-            except:
-                return {"message": "An error occurred deleting the item."}, 500
+            item.delete()
             return {'message': 'Item deleted'}
+
         return {'message': 'Item not found'}, 404
 
     @jwt_required()
     def put(self, name):
         data = Item.parser.parse_args()
+
         item = ItemModel.find_by_name(name)
         if item is None:
-            try:
-                item = ItemModel.insert(data['name'], data['price'])
-            except:
-                return {"message": "An error occurred inserting the item."}, 500
+            item = ItemModel(data['name'], data['price'])
         else:
-            try:
-                item = item.update(data['name'], data['price'])
-            except:
-                return {"message": "An error occurred updating the item."}, 500
+            item.name = data['name']
+            item.price = data['price']
+        try:
+            item.save()
+        except:
+            return {"message": "An error occurred inserting the item."}, 500
+
         return item.json()
 
 
@@ -72,10 +72,14 @@ class ItemList(Resource):
     @jwt_required()
     def post(self):
         data = Item.parser.parse_args()
+
         if ItemModel.find_by_name(data['name']):
             return {'message': "An item with name '{}' already exists.".format(data['name'])}, 400
+        
+        item = ItemModel(**data)
         try:
-            item = ItemModel.insert(data['name'], data['price'])
+            item.save()
         except:
             return {"message": "An error occurred inserting the item."}, 500
+
         return item.json(), 201

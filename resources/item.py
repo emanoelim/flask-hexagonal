@@ -1,6 +1,7 @@
 from flask_restful import Resource, reqparse
 from flask_jwt import jwt_required
 from models.item import ItemModel
+from models.store import StoreModel
 
 
 class Item(Resource):
@@ -14,6 +15,11 @@ class Item(Resource):
         type=float,
         required=True,
         help="This field 'price' cannot be left blank!"
+    )
+    parser.add_argument('store_id',
+        type=int,
+        required=True,
+        help="This field 'store_id' cannot be left blank!"
     )
 
     @jwt_required()
@@ -39,7 +45,7 @@ class Item(Resource):
 
         item = ItemModel.find_by_name(name)
         if item is None:
-            item = ItemModel(data['name'], data['price'])
+            item = ItemModel(**data)
         else:
             item.name = data['name']
             item.price = data['price']
@@ -63,6 +69,11 @@ class ItemList(Resource):
         required=True,
         help="This field 'price' cannot be left blank!"
     )
+    parser.add_argument('store_id',
+        type=int,
+        required=True,
+        help="This field 'store_id' cannot be left blank!"
+    )
 
     @jwt_required()
     def get(self):
@@ -75,6 +86,10 @@ class ItemList(Resource):
 
         if ItemModel.find_by_name(data['name']):
             return {'message': "An item with name '{}' already exists.".format(data['name'])}, 400
+
+        if not StoreModel.find_by_id(data['store_id']):
+            return {'message': "Store with id '{}' not found.".format(data['store_id'])}, 400
+
         
         item = ItemModel(**data)
         try:

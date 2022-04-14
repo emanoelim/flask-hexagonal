@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_restful import Api
 from flask_jwt import JWT
+from flasgger import Swagger
 from db import db
 
 from security import authenticate, identity
@@ -18,6 +19,8 @@ app.config['PROPAGATE_EXCEPTIONS'] = True
 
 app.secret_key = 'asdf'
 api = Api(app)
+
+swagger = Swagger(app)
 
 @app.before_first_request
 def create_tables():

@@ -1,28 +1,13 @@
-from flask_restful import Resource, reqparse
+from flask_restful import Resource, marshal_with, abort
 from flask_jwt import jwt_required
 from models.item import ItemModel
 from models.store import StoreModel
+from resources.item_dto import CreateItemDto, GetItemDto
 
 
 class Item(Resource):
-    parser = reqparse.RequestParser()
-    parser.add_argument('name',
-        type=str,
-        required=True,
-        help="The field 'name' cannot be left blank!"
-    )
-    parser.add_argument('price',
-        type=float,
-        required=True,
-        help="This field 'price' cannot be left blank!"
-    )
-    parser.add_argument('store_id',
-        type=int,
-        required=True,
-        help="This field 'store_id' cannot be left blank!"
-    )
-
     @jwt_required()
+    @marshal_with(GetItemDto.resource_fields, envelope='data')
     def get(self, name):
         """
         Get item by name
@@ -40,9 +25,8 @@ class Item(Resource):
         """
         item = ItemModel.find_by_name(name)
         if item:
-            return item.json()
-            
-        return {'message': 'Item not found'}, 404  
+            return item
+        abort(404, message="Item not found.") 
 
     @jwt_required()
     def delete(self, name):
@@ -68,6 +52,7 @@ class Item(Resource):
         return {'message': 'Item not found'}, 404
 
     @jwt_required()
+    @marshal_with(GetItemDto.resource_fields, envelope='data')
     def put(self, name):
         """
         Update item by name
@@ -97,7 +82,7 @@ class Item(Resource):
           404: 
             description: item not found
         """
-        data = Item.parser.parse_args()
+        data = CreateItemDto.parser.parse_args()
 
         item = ItemModel.find_by_name(name)
         if item is None:
@@ -108,30 +93,14 @@ class Item(Resource):
         try:
             item.save()
         except:
-            return {"message": "An error occurred inserting the item."}, 500
+            abort(500, message="An error occurred inserting the item.")
 
-        return item.json()
+        return item
 
 
 class ItemList(Resource):
-    parser = reqparse.RequestParser()
-    parser.add_argument('name',
-        type=str,
-        required=True,
-        help="This field 'name' cannot be left blank!"
-    )
-    parser.add_argument('price',
-        type=float,
-        required=True,
-        help="This field 'price' cannot be left blank!"
-    )
-    parser.add_argument('store_id',
-        type=int,
-        required=True,
-        help="This field 'store_id' cannot be left blank!"
-    )
-
     @jwt_required()
+    @marshal_with(GetItemDto.resource_fields, envelope='data')
     def get(self):
         """
         Get all items
@@ -141,9 +110,10 @@ class ItemList(Resource):
             description: items
         """
         items = ItemModel.find_all()
-        return {'items': [item.json() for item in items]}
+        return items
     
     @jwt_required()
+    @marshal_with(GetItemDto.resource_fields, envelope='data')
     def post(self):
         """
         Create item
@@ -167,19 +137,19 @@ class ItemList(Resource):
           400:
             description: invalid data
         """
-        data = Item.parser.parse_args()
+        data = CreateItemDto.parser.parse_args()
 
         if ItemModel.find_by_name(data['name']):
-            return {'message': "An item with name '{}' already exists.".format(data['name'])}, 400
+            abort(400, message="An item with name '{}' already exists.".format(data['name'])) 
 
         if not StoreModel.find_by_id(data['store_id']):
-            return {'message': "Store with id '{}' not found.".format(data['store_id'])}, 400
+            abort(400, message="Store with id '{}' not found.".format(data['store_id'])) 
 
         
         item = ItemModel(**data)
         try:
             item.save()
         except:
-            return {"message": "An error occurred inserting the item."}, 500
+            abort(500, message="An error occurred inserting the item.")
 
-        return item.json(), 201
+        return item, 201

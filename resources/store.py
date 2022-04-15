@@ -1,17 +1,12 @@
-from flask_restful import Resource, reqparse
+from flask_restful import Resource, marshal_with, abort
 from flask_jwt import jwt_required
 from models.store import StoreModel
+from resources.store_dto import CreateStoreDto, GetStoreDto
 
 
 class Store(Resource):
-    parser = reqparse.RequestParser()
-    parser.add_argument('name',
-        type=str,
-        required=True,
-        help="The field 'name' cannot be left blank!"
-    )
-
     @jwt_required()
+    @marshal_with(GetStoreDto.resource_fields, envelope='data')
     def get(self, name):
         """
         Get store by name
@@ -29,9 +24,8 @@ class Store(Resource):
         """
         store = StoreModel.find_by_name(name)
         if store:
-            return store.json()
-            
-        return {'message': 'Store not found'}, 404  
+            return store
+        abort(404, message="Item not found.")  
 
     @jwt_required()
     def delete(self, name):
@@ -57,6 +51,7 @@ class Store(Resource):
         return {'message': 'Store not found'}, 404
 
     @jwt_required()
+    @marshal_with(GetStoreDto.resource_fields, envelope='data')
     def put(self, name):
         """
         Update store by name
@@ -82,7 +77,7 @@ class Store(Resource):
           404: 
             description: store not found
         """
-        data = Store.parser.parse_args()
+        data = CreateStoreDto.parser.parse_args()
 
         store = StoreModel.find_by_name(name)
         if store is None:
@@ -92,20 +87,14 @@ class Store(Resource):
         try:
             store.save()
         except:
-            return {"message": "An error occurred inserting the store."}, 500
+            abort(500, message="An error occurred inserting the store.")
 
-        return store.json()
+        return store
 
 
 class StoreList(Resource):
-    parser = reqparse.RequestParser()
-    parser.add_argument('name',
-        type=str,
-        required=True,
-        help="This field 'name' cannot be left blank!"
-    )
-
     @jwt_required()
+    @marshal_with(GetStoreDto.resource_fields, envelope='data')
     def get(self):
         """
         Get all stores
@@ -115,9 +104,10 @@ class StoreList(Resource):
             description: stores
         """
         stores = StoreModel.find_all()
-        return {'Stores': [store.json() for store in stores]}
+        return stores
     
     @jwt_required()
+    @marshal_with(GetStoreDto.resource_fields, envelope='data')
     def post(self):
         """
         Create store
@@ -137,15 +127,15 @@ class StoreList(Resource):
           400:
             description: invalid data
         """
-        data = Store.parser.parse_args()
+        data = CreateStoreDto.parser.parse_args()
 
         if StoreModel.find_by_name(data['name']):
-            return {'message': "An store with name '{}' already exists.".format(data['name'])}, 400
+            abort(400, message="An store with name '{}' already exists.".format(data['name'])) 
         
         store = StoreModel(**data)
         try:
             store.save()
         except:
-            return {"message": "An error occurred inserting the store."}, 500
+            abort(500, message="An error occurred inserting the store.")
 
-        return store.json(), 201
+        return store, 201

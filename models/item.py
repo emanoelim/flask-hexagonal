@@ -16,9 +16,6 @@ class ItemModel(db.Model):
         self.price = price
         self.store_id = store_id
 
-    def json(self):
-        return {'id': self.id, 'name': self.name, 'price': self.price}
-
     @classmethod
     def find_by_name(cls, name):
         return cls.query.filter_by(name=name).first()

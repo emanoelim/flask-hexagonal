@@ -16,11 +16,11 @@ class ItemPersistenceAdapter:
     def find_all(self):
         return self.respository.find_all()
 
-    def create(self, name, price):
-        return self.respository.create(name, price)
+    def create(self, name, price, image=None):
+        return self.respository.create(name, price, image)
 
-    def update(self, _id, name, price):
-        return self.respository.update(_id, name, price)
+    def update(self, _id, name, price, image=None):
+        return self.respository.update(_id, name, price, image)
 
     def delete(self, _id):
         self.respository.delete(_id)

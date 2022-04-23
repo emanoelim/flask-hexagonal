@@ -1,4 +1,5 @@
 from db import db
+
 from item.adapters.model.item_model import ItemModel
 
 
@@ -16,17 +17,18 @@ class ItemRepository:
         return ItemModel.query.all()
 
     @staticmethod
-    def create(name, price):
-        item = ItemModel(name, price)
+    def create(name, price, image):
+        item = ItemModel(name, price, image)
         db.session.add(item)
         db.session.commit()
         return item
 
-    def update(self, _id, name, price):
+    def update(self, _id, name, price, image):
         item = self.find_by_id(_id)
         if item:
             item.name = name
             item.price = price
+            item.image = image
             db.session.add(item)
             db.session.commit()
         return item
